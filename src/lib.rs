@@ -1,26 +1,39 @@
 pub mod funciones {
 
+    use clap::Parser;
     use rayon::prelude::*;
     use regex::Regex;
     use std::sync::{Arc, Mutex};
-    use std::{env, fs, process};
+    use std::{fs, process};
+
+    #[derive(Parser, Debug)]
+    #[command(name = "file_grep")]
+    #[command(about="Busca archivos y carpetas por nombre en el sistema", long_about = None)]
+    struct Args {
+        pattern: String,
+
+        #[arg(long)]
+        here: bool,
+    }
 
     pub fn run() -> () {
         let mut results: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
-        let path: String = match get_argument() {
-            Some(a) => a,
-            None => String::from(" "),
+
+        let args = Args::parse();
+        let search_dir: String = match args.here {
+            true => String::from("./"),
+            false => String::from("/home/gd15/"),
         };
 
-        if path == " " {
+        if args.pattern == " " {
             eprintln!("Uso: \nfile_grep <file | directory>");
             process::exit(200);
         }
 
-        let regex_string = format!(r".*{}.*", regex::escape(&path));
+        let regex_string = format!(r".*{}.*", regex::escape(&args.pattern));
         let path_regex = Arc::new(Regex::new(&regex_string).unwrap());
         search_though_files(
-            "/home/gd15/",
+            &search_dir,
             Arc::clone(&path_regex),
             Arc::clone(&mut results),
         );
@@ -29,15 +42,6 @@ pub mod funciones {
         for result in final_results.iter() {
             println!("{}", result);
         }
-    }
-
-    fn get_argument() -> Option<String> {
-        let args: Vec<String> = env::args().collect();
-        if args.len() < 2 {
-            return None;
-        }
-        let name = String::clone(&args[1]);
-        return Some(name);
     }
 
     fn search_though_files(
