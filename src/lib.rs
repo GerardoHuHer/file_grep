@@ -3,6 +3,7 @@ pub mod funciones {
     use clap::Parser;
     use rayon::prelude::*;
     use regex::Regex;
+    use std::env;
     use std::sync::{Arc, Mutex};
     use std::{fs, process};
 
@@ -18,11 +19,11 @@ pub mod funciones {
 
     pub fn run() -> () {
         let mut results: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
-
+        let user = env::var("HOME").unwrap();
         let args = Args::parse();
         let search_dir: String = match args.here {
             true => String::from("./"),
-            false => String::from("/home/gd15/"),
+            false => String::from(user),
         };
 
         if args.pattern == " " {
